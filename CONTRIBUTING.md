@@ -23,9 +23,10 @@ pnpm db:generate
 pnpm db:migrate   # creates db/migrations/*, applies them, then runs the seed
 ```
 
-The seed only inserts the 5 fixed exam tracks (Reading, Use of English, Listening, Writing,
-Speaking). It never inserts generated lesson content, that comes from the content pipeline
-(Phase 4, see `PLAN.md`) or per-phase manual seeds.
+The seed inserts the 5 fixed exam tracks (Reading, Use of English, Listening, Writing,
+Speaking) plus, from Phase 1, a small hand-authored demo lesson (`content/seed/lesson-demo.ts`)
+so there's something to run through the lesson runner. It never inserts LLM-generated content,
+that comes from the content pipeline (Phase 4, see `PLAN.md`).
 
 ## Running the app
 
