@@ -1,0 +1,30 @@
+{
+  "Footer": {
+    "disclaimer": "Not affiliated with or endorsed by Cambridge Assessment English."
+  },
+  "Nav": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "Marketing": {
+    "title": "Prepare for Cambridge C1 Advanced, one lesson at a time",
+    "subtitle": "Short daily lessons, spaced repetition and exam-realistic practice, built for the exam you're actually taking.",
+    "cta": "Get started"
+  },
+  "SignIn": {
+    "title": "Sign in",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Send magic link",
+    "or": "or",
+    "googleButton": "Continue with Google",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We sent you a sign-in link. It expires soon, so use it right away."
+  },
+  "Learn": {
+    "title": "Your learning path",
+    "emptyTitle": "Your skill tree is being built",
+    "emptyBody": "Lessons for this track will appear here once content is published.",
+    "unitsCount": "{count, plural, =0 {no units yet} one {# unit} other {# units}}"
+  }
+}

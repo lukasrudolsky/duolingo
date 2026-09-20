@@ -27,7 +27,16 @@ Otevřené položky, které vyžadují rozhodnutí uživatele nebo se řeší v 
   varianty implementována ve Fázi 1, LLM posouzení nejednoznačných odpovědí přijde až s
   `/core/llm` (Fáze 4 a dál).
 - Google OAuth tlačítko: skryté v dev, dokud nejsou v `.env` vyplněné
-  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`.
+  `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`.
 - Magic link email: v dev se odkaz loguje do konzole místo reálného odeslání přes Resend,
   dokud není vyplněný `RESEND_API_KEY`.
 - Stripe: běží v test mode, dokud nejsou doplněné live klíče.
+
+## Testovací mezery
+
+- **E2E pokrytí přihlášení je částečné** (Fáze 0). `e2e/onboarding.spec.ts` ověřuje jen cestu
+  landing -> sign-in a route guard pro nepřihlášeného uživatele, ne celý magic-link round trip
+  (odeslání -> otevření odkazu -> session -> `/learn`), protože to v automatizovaném testu bez
+  reálné schránky nejde čistě zopakovat. Plný flow byl ověřen ručně (viz ARCHITECTURE.md
+  rozhodnutí 9). Až bude k dispozici testovací email provider nebo cesta k magic-linku bez
+  emailu (např. dočasný endpoint jen pro test prostředí), doplnit i tohle do e2e.

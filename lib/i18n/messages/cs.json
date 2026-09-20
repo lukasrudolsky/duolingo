@@ -1,0 +1,30 @@
+{
+  "Footer": {
+    "disclaimer": "Neoficiální příprava, bez spojení s Cambridge Assessment English."
+  },
+  "Nav": {
+    "signIn": "Přihlásit se",
+    "signOut": "Odhlásit se"
+  },
+  "Marketing": {
+    "title": "Připrav se na Cambridge C1 Advanced krok za krokem",
+    "subtitle": "Krátké denní lekce, promyšlené opakování a cvičení podle skutečné zkoušky.",
+    "cta": "Začít"
+  },
+  "SignIn": {
+    "title": "Přihlášení",
+    "emailLabel": "Email",
+    "emailPlaceholder": "vas@email.cz",
+    "submit": "Poslat přihlašovací odkaz",
+    "or": "nebo",
+    "googleButton": "Pokračovat přes Google",
+    "checkEmailTitle": "Zkontroluj svůj email",
+    "checkEmailBody": "Poslali jsme ti přihlašovací odkaz. Brzy vyprší, použij ho hned."
+  },
+  "Learn": {
+    "title": "Tvoje cesta učení",
+    "emptyTitle": "Strom dovedností se připravuje",
+    "emptyBody": "Lekce pro tuto část se objeví, jakmile bude publikovaný obsah.",
+    "unitsCount": "{count, plural, =0 {zatím žádné jednotky} one {# jednotka} few {# jednotky} other {# jednotek}}"
+  }
+}

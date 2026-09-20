@@ -26,9 +26,15 @@ obsahu (SPEC.md sekce 6.1).
 
 ---
 
-## Fáze 0: Základy (odhad 0,5 dne)
+## Fáze 0: Základy (odhad 0,5 dne) — HOTOVO
 
 Cíl: přihlášení funguje, uživatel vidí prázdný skill tree, CI je zelené.
+
+Stav: splněno a ověřeno end-to-end (viz ARCHITECTURE.md, sekce "Stav" a rozhodnutí 8 až 10 pro
+odchylky od původního plánu: Next.js 16 místo 15, Prisma 7 driver adapter místo `url` ve schématu,
+i18n bez URL routingu). Skutečný seznam souborů se v drobnostech liší od odhadu níže (např.
+`lib/env.ts` je rozdělené na `lib/env.server.ts` a `lib/env.public.ts`, sign-in stránky žijí pod
+`app/(marketing)/sign-in/`), odhad zůstává jako orientační záznam plánu před implementací.
 
 Úkoly:
 1. Inicializace Next.js 15 (App Router) + React 19 + TypeScript strict, pnpm workspace.
