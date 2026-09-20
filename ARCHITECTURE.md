@@ -105,6 +105,41 @@ Next.js 16 je při `next dev`/`next build` sám generuje a udržuje (verzově sp
 pro agenty pracující s frameworkem). Necommitovat je zpátky by je jen donutilo se objevit znovu
 jako neuložená změna při příštím spuštění, viz komentář uvnitř souboru.
 
+### 11. `LessonItem` doplněn v Fázi 1
+Prisma schema z Fáze 0 (SPEC.md sekce 7 samo mělo tuhle díru) nemělo způsob, jak zjistit, které
+Itemy patří do dané Lesson a v jakém pořadí. Pro `LEARN` lekci je pořadí pedagogicky záměrné
+(úvod nové látky, ne náhodný výběr), takže musí být explicitně uložené, ne dopočítané za běhu.
+Přidán `LessonItem { lessonId, itemId, order }` jako join tabulka. Dynamický výběr (Daily Mix,
+Fáze 2) tímhle není dotčený, ten vybírá z fondu Itemů podle `skillId`, ne z konkrétní Lesson.
+
+### 12. Exercise engine: `core/exercise-engine`
+Plugin registr (SPEC.md sekce 4): každý typ cvičení je `ExerciseDefinition<Payload, Solution,
+Response>` se třemi Zod schématy (`payloadSchema`, `solutionSchema`, `responseSchema`),
+`validate()` (vrací `{isCorrect, score, maxScore, feedback}` najednou) a `describeSolution()`
+(terse "co byla správná odpověď", odvozené ze tvaru payload/solution - ne pedagogické "proč",
+to je `Item.explanation` z DB). Typy se registrují side-effect importem
+(`core/exercise-engine/exercises/index.ts`), `getExerciseType()` u neimplementovaného typu
+hlasitě selže (typy zbylé pro pozdější fáze existují v Prisma enumu, ale nemají definici).
+
+Validace textových odpovědí (`OPEN_CLOZE`, `WORD_FORMATION`, `TYPE_THE_WORD`) sdílí jednu funkci
+`validateWordAnswer` v `normalize.ts`: case-insensitive přesná shoda, s `typoDistance` (Levenshtein
++ transpozice sousedních písmen jako jedna edit, ne dvě - běžný lidský překlep jako "recieve") pro
+rozlišení "špatné slovo" od "správné slovo, špatný pravopis" (SPEC.md sekce 4.3).
+`KEY_WORD_TRANSFORMATION` bodování 0/1/2 kontroluje dvě nezávislé části odpovědi (substring match
+po normalizaci kontrakcí), ne jen přesnou shodu s akceptovanými variantami - odpověď se správným
+obsahem, ale navíc slovy okolo, tak dostane plný počet bodů, ne 0. Když se nenajde ani jedna
+část, `feedback: "needs_review"` označuje kandidáta na budoucí LLM fallback (STUB, Fáze 4+),
+místo tichého "špatně navždy".
+
+### 13. Session guard bez vlastního TS module augmentation
+Zkoušeno rozšířit `session.user.id` na povinný `string` přes `declare module "@auth/core/types"`
+(Auth.js dokumentovaný postup). Nefungovalo spolehlivě: pnpm nainstaloval `next-auth`/`@auth/core`
+ve více fyzických kopiích (různé peer-dependency hashe), takže augmentace na jedné kopii se
+neprojevila v typu, který skutečně vrací `auth()`. Řešení je jednodušší a nezávislé na téhle
+duplicitě: `session?.user?.id` (typ `string | undefined`, protože `DefaultUser.id` je v
+next-auth optional) se čte do lokální proměnné a ověří guardem (`if (!userId) throw`), TS pak
+zúží typ přes control flow bez nutnosti augmentace. Viz `app/(app)/lesson/[id]/actions.ts`.
+
 ## Bezpečnostní pravidla
 
 - `Item.solution` se nikdy neposílá na klienta před odpovědí uživatele (SPEC.md sekce 9).
@@ -120,6 +155,12 @@ jako neuložená změna při příštím spuštění, viz komentář uvnitř sou
   (`.github/workflows/ci.yml`: typecheck, lint, unit testy, build, e2e). Ověřeno end-to-end
   (viz rozhodnutí 9): přihlášení, prázdný skill tree se seedovanými Tracky, `pnpm typecheck`,
   `pnpm lint`, `pnpm test`, `pnpm test:e2e`, `pnpm build` všechny zelené.
+- **Fáze 1: hotovo.** Exercise engine (9 typů, viz rozhodnutí 12), `LessonItem` doplněn do
+  schématu (rozhodnutí 11), lesson runner UI (`app/(app)/lesson/[id]`), Server Actions
+  startLesson/submitAttempt/completeLesson, demo lekce o 12 itemech (business phrasal verbs,
+  `content/seed/lesson-demo.ts`). 49 unit testů, e2e test dojede celou lekci se skutečným
+  přihlášením přes dev magic-link (`e2e/lesson.spec.ts`). `pnpm typecheck`, `pnpm lint`,
+  `pnpm test`, `pnpm test:e2e`, `pnpm build` všechny zelené.
 - Zbytek: neprovedeno.
 
 ## Otevřené otázky pro budoucí fáze

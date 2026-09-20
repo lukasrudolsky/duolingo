@@ -11,6 +11,14 @@ export const authConfig = {
     verifyRequest: "/sign-in/check-email",
   },
   session: { strategy: "jwt" },
+  callbacks: {
+    // JWT strategy doesn't expose the user id on session.user by default; token.sub is the
+    // user id under this strategy (see lib/auth.d.ts for the matching type augmentation).
+    session({ session, token }) {
+      if (token.sub) session.user.id = token.sub;
+      return session;
+    },
+  },
   providers: [
     Resend({
       apiKey: serverEnv.RESEND_API_KEY,

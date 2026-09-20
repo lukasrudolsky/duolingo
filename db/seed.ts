@@ -4,10 +4,12 @@ loadDotenv();
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { seedLessonDemo } from "../content/seed/lesson-demo";
 
-// Seeds structural reference data only (the 5 fixed exam tracks), never generated content.
-// Actual Units/Skills/Items are seeded per phase (see PLAN.md) or produced by the content
-// pipeline (SPEC.md section 6.1).
+// Structural reference data (the 5 fixed exam tracks) plus, from Phase 1, a small
+// hand-authored demo lesson (content/seed/lesson-demo.ts) so a fresh clone has something to
+// actually run through the lesson runner. This is NOT the content pipeline (SPEC.md section
+// 6.1, Phase 4) - real content generation is dealt with separately.
 const TRACKS = [
   { code: "READING", title: "Reading" },
   { code: "USE_OF_ENGLISH", title: "Use of English" },
@@ -33,6 +35,10 @@ async function main() {
   }
 
   console.log(`Seeded ${TRACKS.length} tracks.`);
+
+  const demo = await seedLessonDemo(prisma);
+  console.log(`Seeded demo lesson ${demo.lessonId} with ${demo.itemCount} items.`);
+
   await prisma.$disconnect();
 }
 

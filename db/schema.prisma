@@ -184,9 +184,26 @@ model Lesson {
   skill   Skill      @relation(fields: [skillId], references: [id])
   order   Int
   type    LessonType
+  items   LessonItem[]
 
   @@unique([skillId, order])
   @@index([skillId])
+}
+
+// Added in Phase 1: SPEC.md section 7 never modeled which Items belong to a Lesson, or in
+// what order. A LEARN lesson introduces content in a deliberately curated sequence (not a
+// dynamic pull from the skill's item pool, which is what Daily Mix does in Phase 2), so that
+// sequence needs to be explicit and stored, not derived.
+model LessonItem {
+  lessonId String
+  itemId   String
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+  item     Item   @relation(fields: [itemId], references: [id])
+  order    Int
+
+  @@id([lessonId, itemId])
+  @@unique([lessonId, order])
+  @@index([itemId])
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +268,7 @@ model Item {
   mistakeEntries      MistakeEntry[]
   writingSubmissions  WritingSubmission[]
   speakingSubmissions SpeakingSubmission[]
+  lessonItems         LessonItem[]
 
   @@index([skillId, status, difficultyB])
 }

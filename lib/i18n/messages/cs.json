@@ -25,6 +25,7 @@
     "title": "Tvoje cesta učení",
     "emptyTitle": "Strom dovedností se připravuje",
     "emptyBody": "Lekce pro tuto část se objeví, jakmile bude publikovaný obsah.",
-    "unitsCount": "{count, plural, =0 {zatím žádné jednotky} one {# jednotka} few {# jednotky} other {# jednotek}}"
+    "unitsCount": "{count, plural, =0 {zatím žádné jednotky} one {# jednotka} few {# jednotky} other {# jednotek}}",
+    "startLesson": "Spustit lekci"
   }
 }

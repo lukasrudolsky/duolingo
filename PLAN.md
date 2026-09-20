@@ -70,9 +70,15 @@ projdou.
 
 ---
 
-## Fáze 1: Exercise engine (odhad 2 dny)
+## Fáze 1: Exercise engine (odhad 2 dny) — HOTOVO
 
 Cíl: běh lekce od začátku do konce s ručně seedovanými itemy.
+
+Stav: splněno a ověřeno end-to-end (viz ARCHITECTURE.md sekce "Stav" a nová rozhodnutí 11 až
+13). Dvě odchylky od plánu níže: (a) datový model dostal navíc `LessonItem` (chybějící vazba
+Lesson↔Item z Fáze 0 schématu, viz rozhodnutí 11); (b) seed obsahu je 12 itemů (jeden až dva na
+typ), ne 40 až 60 - bohatý obsahový bank je práce content pipeline (Fáze 4), Fáze 1 potřebovala
+jen tolik obsahu, kolik ověří enginem a acceptance kritériem ("lekce o cca 10 otázkách").
 
 Úkoly:
 1. `/core/exercise-engine`: registr typů (interface `ExerciseType<Payload, Solution, Response>`
@@ -94,21 +100,32 @@ Cíl: běh lekce od začátku do konce s ručně seedovanými itemy.
 9. Unit testy validátorů včetně edge cases transformací (kontrakce, velká/malá písmena,
    částečná shoda, prázdná odpověď).
 
-Soubory (orientačně):
+Skutečné rozhraní se od návrhu mírně liší: `ExerciseDefinition<Payload, Solution, Response>` má
+`payloadSchema`/`solutionSchema`/`responseSchema` (tři samostatná Zod schémata, ne jedno
+`schema`), `validate()` vrací skóre i korektnost dohromady (žádná zvlášť `score()` metoda), a
+místo `explain()` je `describeSolution()` - vrací jen terse "co byla správná odpověď", protože
+skutečné pedagogické "proč" je `Item.explanation` z DB (SPEC.md sekce 3.5), ne věc exercise
+enginu. Zdůvodnění je v komentářích `core/exercise-engine/types.ts`.
+
+Skutečné soubory:
 ```
-core/exercise-engine/registry.ts
-core/exercise-engine/types/{mcq-cloze,open-cloze,word-formation,key-word-transformation}.ts
-core/exercise-engine/types/{flashcard,type-the-word,collocation-match,odd-one-out,sentence-build}.ts
-core/exercise-engine/normalize.ts
-app/(app)/lesson/[id]/page.tsx
-app/(app)/lesson/[id]/actions.ts
-components/lesson/{ItemRenderer,FeedbackPanel,LessonSummary}.tsx
+core/exercise-engine/{types,normalize,registry,index}.ts (+ .test.ts u normalize a registry)
+core/exercise-engine/exercises/{mcq-cloze,open-cloze,word-formation,key-word-transformation,
+  flashcard,type-the-word,collocation-match,odd-one-out,sentence-build}.ts (+ .test.ts u každého)
+app/(app)/lesson/[id]/{page.tsx,actions.ts}
+components/exercise/{text-answer-input,choice-list,item-renderer,
+  mcq-cloze-renderer,open-cloze-renderer,word-formation-renderer,
+  key-word-transformation-renderer,flashcard-renderer,type-the-word-renderer,
+  collocation-match-renderer,odd-one-out-renderer,sentence-build-renderer}.tsx
+components/lesson/{lesson-runner,feedback-panel,lesson-summary}.tsx
 content/seed/lesson-demo.ts
-tests/core/exercise-engine/*.test.ts
+e2e/lesson.spec.ts, e2e/helpers/{answer-item,magic-link}.ts
 ```
 
-Acceptance: projdu lekci o 10 otázkách, dostanu vysvětlení u každé, na konci shrnutí. Unit testy
-validátorů zelené včetně edge cases u transformací.
+Acceptance: projdu lekci o 12 otázkách (9 typů, 2 zdvojené u MCQ_CLOZE a
+KEY_WORD_TRANSFORMATION), dostanu vysvětlení u každé, na konci shrnutí. Unit testy validátorů
+zelené včetně edge cases u transformací (49 testů). E2E test dojede celou lekci automaticky
+(`e2e/lesson.spec.ts`), včetně reálného přihlášení přes dev magic-link fallback.
 
 ---
 

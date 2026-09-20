@@ -10,10 +10,11 @@ const launchOptions = fs.existsSync(SANDBOX_CHROMIUM_PATH)
   ? { executablePath: SANDBOX_CHROMIUM_PATH }
   : undefined;
 
-// Magic-link login can't be driven end-to-end without a real inbox (see TODO.md), so this
-// covers the parts of the critical path that don't need it: landing -> sign-in, and the
-// (app) route guard for unauthenticated visitors. Full login e2e is deferred until a test
-// email provider is wired up.
+// The dev server logs magic links to stdout instead of emailing them (see lib/auth.config.ts,
+// RESEND_API_KEY unset). Redirecting that to a fixed file lets e2e tests read the link back
+// out and drive a real login, without a test email inbox.
+export const DEV_SERVER_LOG_PATH = "/tmp/duolingo-e2e-dev-server.log";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -44,7 +45,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm exec next dev -p 3100",
+    command: `pnpm exec next dev -p 3100 > ${DEV_SERVER_LOG_PATH} 2>&1`,
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

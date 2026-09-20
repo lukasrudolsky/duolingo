@@ -48,6 +48,9 @@ jobs:
       - name: Apply migrations
         run: pnpm exec prisma migrate deploy
 
+      - name: Seed (tracks + Phase 1 demo lesson, needed by e2e/lesson.spec.ts)
+        run: pnpm db:seed
+
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test

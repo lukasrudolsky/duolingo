@@ -34,9 +34,17 @@ Otevřené položky, které vyžadují rozhodnutí uživatele nebo se řeší v 
 
 ## Testovací mezery
 
-- **E2E pokrytí přihlášení je částečné** (Fáze 0). `e2e/onboarding.spec.ts` ověřuje jen cestu
-  landing -> sign-in a route guard pro nepřihlášeného uživatele, ne celý magic-link round trip
-  (odeslání -> otevření odkazu -> session -> `/learn`), protože to v automatizovaném testu bez
-  reálné schránky nejde čistě zopakovat. Plný flow byl ověřen ručně (viz ARCHITECTURE.md
-  rozhodnutí 9). Až bude k dispozici testovací email provider nebo cesta k magic-linku bez
-  emailu (např. dočasný endpoint jen pro test prostředí), doplnit i tohle do e2e.
+- ~~E2E pokrytí přihlášení je částečné~~ Vyřešeno ve Fázi 1: `e2e/lesson.spec.ts` prochází
+  celým magic-link flow (odeslání -> parsování odkazu z dev server logu -> otevření -> session)
+  přes `e2e/helpers/magic-link.ts`. Funguje, protože dev fallback loguje odkaz do stdoutu, které
+  Playwright přesměruje do souboru; s reálným Resend v produkci by tohle nešlo stejně, ale to
+  není cíl (e2e běží proti dev fallbacku záměrně).
+
+## Drobnosti k prozkoumání (nekritické)
+
+- **pnpm nainstaloval `next-auth`/`@auth/core` ve více fyzických kopiích** (různé
+  peer-dependency hashe v `node_modules/.pnpm`). Zjištěno ve Fázi 1 při pokusu o TS module
+  augmentation `session.user.id` (ARCHITECTURE.md rozhodnutí 13) - augmentace na jedné kopii se
+  neprojevila v typu, který vrací `auth()`. Obešlo se to bez augmentace, ale stálo by za to
+  jednou zjistit, jestli jde duplicitu odstranit (`pnpm dedupe` nebo explicitní `overrides` v
+  `package.json`), než to způsobí problém i jinde.
