@@ -8,6 +8,15 @@
   --border: #dfe3e8;
   --primary: #2b59ff;
   --primary-foreground: #ffffff;
+  --gradient-primary-from: #0a1a6b;
+  --gradient-primary-via: #2b59ff;
+  --gradient-primary-to: #cfeeff;
+  --gradient-primary: linear-gradient(
+    120deg,
+    var(--gradient-primary-from),
+    var(--gradient-primary-via) 55%,
+    var(--gradient-primary-to)
+  );
 
   --success: #1a9f5b;
   --success-foreground: #ffffff;
@@ -67,6 +76,9 @@
     --border: #262b33;
     --primary: #6d8bff;
     --primary-foreground: #0d0f13;
+    --gradient-primary-from: #0a1660;
+    --gradient-primary-via: #3f6bff;
+    --gradient-primary-to: #d6f1ff;
 
     --success: #34c98a;
     --success-foreground: #06150e;

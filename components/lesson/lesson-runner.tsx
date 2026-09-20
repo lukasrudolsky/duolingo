@@ -65,8 +65,8 @@ export function LessonRunner({ sessionId, items }: { sessionId: string; items: L
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-12">
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
-          style={{ width: `${progressPercent}%` }}
+          className="h-full rounded-full transition-[width] duration-300 ease-out"
+          style={{ width: `${progressPercent}%`, background: "var(--gradient-primary)" }}
         />
       </div>
       <p className="text-sm text-muted-foreground">

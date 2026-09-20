@@ -1,3 +1,4 @@
+import { useId } from "react";
 import Link from "next/link";
 
 export function LessonSummary({ correctCount, totalItems }: { correctCount: number; totalItems: number }) {
@@ -6,11 +7,19 @@ export function LessonSummary({ correctCount, totalItems }: { correctCount: numb
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - percent);
+  const gradientId = useId();
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-5 px-6 py-24 text-center">
       <div className="anim-pop-in relative flex h-32 w-32 items-center justify-center">
         <svg viewBox="0 0 120 120" className="h-32 w-32 -rotate-90">
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="var(--gradient-primary-from)" />
+              <stop offset="55%" stopColor="var(--gradient-primary-via)" />
+              <stop offset="100%" stopColor="var(--gradient-primary-to)" />
+            </linearGradient>
+          </defs>
           <circle cx="60" cy="60" r={radius} fill="none" strokeWidth="10" className="stroke-muted" />
           <circle
             cx="60"
@@ -19,7 +28,7 @@ export function LessonSummary({ correctCount, totalItems }: { correctCount: numb
             fill="none"
             strokeWidth="10"
             strokeLinecap="round"
-            className={`stroke-current ${isPerfect ? "text-success" : "text-primary"}`}
+            stroke={isPerfect ? "var(--success)" : `url(#${gradientId})`}
             style={{ strokeDasharray: circumference, strokeDashoffset: offset }}
           />
         </svg>
