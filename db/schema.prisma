@@ -1,0 +1,480 @@
+// Finální návrh datového modelu (SPEC.md sekce 7), rozpracovaný do konkrétních Prisma modelů.
+// Navrženo před Fází 0, ke schválení. Změny oproti hrubému náčrtu v SPEC.md a proč:
+//
+// - Přidány enumy tam, kde SPEC.md píše hodnoty do závorky (Track.code, Item.status, ...).
+//   Databázová konzistence je tu levnější než validace v aplikaci.
+// - Item.type má i všechny drill typy ze sekce 4.2, ne jen exam-native ze sekce 4.1.
+// - Session (doménová, "běh lekce") koliduje jménem s Auth.js session tabulkou. Auth.js v5
+//   defaultně používá JWT session strategy, takže vlastní Session tabulka od Auth.js není
+//   potřeba vůbec, kolize tím odpadá. Account a VerificationToken (potřebné pro Google OAuth
+//   a magic link) mají standardní NextAuth jména, aby @auth/prisma-adapter fungoval bez
+//   custom mappingu.
+// - Attempt.id je klientem generované UUID (ne DB serial/cuid), kvůli idempotentní offline
+//   synchronizaci ve Fázi 10 (viz PLAN.md rizika).
+// - League jako samostatný model (SPEC.md zmiňuje jen LeagueMembership.leagueId, ale bez
+//   entity by neexistovalo nic, na co ukazuje).
+// - DailyGoal rozdělen na dailyGoalUnit + dailyGoalValue, protože SPEC.md sekce 5 popisuje
+//   dvě různé jednotky (minuty NEBO počet lekcí), ne jedno číslo.
+// - WritingSubmission.taskId a SpeakingSubmission.taskId ukazují na Item (typu WRITING_TASK
+//   resp. SPEAKING_TASK), stejně jako u ostatních cvičení, žádná zvláštní Task tabulka navíc.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth.js v5 adapter modely
+// ---------------------------------------------------------------------------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Uživatel a profil
+// ---------------------------------------------------------------------------
+
+enum Locale {
+  EN
+  CS
+}
+
+enum Plan {
+  FREE
+  PRO
+  EXAM_BUNDLE
+}
+
+enum DailyGoalUnit {
+  MINUTES
+  LESSONS
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  locale        Locale    @default(EN)
+  timezone      String    @default("Europe/Prague")
+  examDate      DateTime?
+  dailyGoalUnit DailyGoalUnit @default(LESSONS)
+  dailyGoalValue Int      @default(1)
+  plan          Plan      @default(FREE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts            Account[]
+  profile             Profile?
+  streak              Streak?
+  subscription        Subscription?
+  skillStates         UserSkillState[]
+  itemStates          UserItemState[]
+  attempts            Attempt[]
+  sessions            Session[]
+  mockExams           MockExam[]
+  writingSubmissions  WritingSubmission[]
+  speakingSubmissions SpeakingSubmission[]
+  xpEvents            XpEvent[]
+  leagueMemberships   LeagueMembership[]
+  mistakeEntries      MistakeEntry[]
+  auditLogs           AuditLog[]
+}
+
+model Profile {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thetaReading      Float    @default(0)
+  thetaUseOfEnglish Float    @default(0)
+  thetaListening    Float    @default(0)
+  thetaWriting      Float    @default(0)
+  thetaSpeaking     Float    @default(0)
+  updatedAt         DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Obsahová struktura: Track -> Unit -> Skill -> Lesson -> Item
+// ---------------------------------------------------------------------------
+
+enum TrackCode {
+  READING
+  USE_OF_ENGLISH
+  LISTENING
+  WRITING
+  SPEAKING
+}
+
+model Track {
+  id    String    @id @default(cuid())
+  code  TrackCode @unique
+  title String
+  units Unit[]
+}
+
+model Unit {
+  id          String  @id @default(cuid())
+  trackId     String
+  track       Track   @relation(fields: [trackId], references: [id])
+  order       Int
+  title       String
+  description String
+  cefrFocus   String
+  skills      Skill[]
+
+  @@unique([trackId, order])
+  @@index([trackId])
+}
+
+model Skill {
+  id     String  @id @default(cuid())
+  unitId String
+  unit   Unit    @relation(fields: [unitId], references: [id])
+  order  Int
+  title  String
+  tags   String[]
+
+  lessons    Lesson[]
+  items      Item[]
+  userStates UserSkillState[]
+
+  @@unique([unitId, order])
+  @@index([unitId])
+}
+
+enum LessonType {
+  LEARN
+  PRACTICE
+  CHECKPOINT
+}
+
+model Lesson {
+  id      String     @id @default(cuid())
+  skillId String
+  skill   Skill      @relation(fields: [skillId], references: [id])
+  order   Int
+  type    LessonType
+
+  @@unique([skillId, order])
+  @@index([skillId])
+}
+
+// ---------------------------------------------------------------------------
+// Item a cvičení (SPEC.md sekce 4: exam-native + drill typy)
+// ---------------------------------------------------------------------------
+
+enum ItemType {
+  // Exam-native (sekce 4.1)
+  MCQ_CLOZE
+  OPEN_CLOZE
+  WORD_FORMATION
+  KEY_WORD_TRANSFORMATION
+  MCQ_READING
+  CROSS_TEXT_MATCHING
+  GAPPED_TEXT
+  MULTIPLE_MATCHING
+  LISTENING_MCQ
+  SENTENCE_COMPLETION
+  LISTENING_MATCHING
+  WRITING_TASK
+  SPEAKING_TASK
+  // Drill (sekce 4.2)
+  FLASHCARD
+  TYPE_THE_WORD
+  COLLOCATION_MATCH
+  ODD_ONE_OUT
+  SENTENCE_BUILD
+  LISTEN_AND_TYPE
+  SPOT_THE_ERROR
+  REGISTER_SWAP
+  PHRASAL_VERB_SORT
+  PREFIX_SUFFIX_DRILL
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  RETIRED
+}
+
+model Item {
+  id              String        @id @default(cuid())
+  skillId         String?
+  skill           Skill?        @relation(fields: [skillId], references: [id])
+  type            ItemType
+  payload         Json
+  solution        Json
+  explanation     String
+  difficultyB     Float         @default(0)
+  discriminationA Float         @default(1)
+  status          ContentStatus @default(DRAFT)
+  version         Int           @default(1)
+  sourceHash      String        @unique
+  createdBy       String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  variants            ItemVariant[]
+  itemStates          UserItemState[]
+  attempts            Attempt[]
+  mistakeEntries      MistakeEntry[]
+  writingSubmissions  WritingSubmission[]
+  speakingSubmissions SpeakingSubmission[]
+
+  @@index([skillId, status, difficultyB])
+}
+
+model ItemVariant {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+}
+
+// ---------------------------------------------------------------------------
+// Progrese, SRS, IRT
+// ---------------------------------------------------------------------------
+
+model UserSkillState {
+  userId          String
+  skillId         String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill           Skill     @relation(fields: [skillId], references: [id])
+  masteryLevel    Int       @default(0) // 0..5, 5 = mastered
+  lastPracticedAt DateTime?
+
+  @@id([userId, skillId])
+  @@index([userId])
+}
+
+model UserItemState {
+  userId         String
+  itemId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item           Item     @relation(fields: [itemId], references: [id])
+  fsrsStability  Float    @default(0)
+  fsrsDifficulty Float    @default(0)
+  due            DateTime @default(now())
+  reps           Int      @default(0)
+  lapses         Int      @default(0)
+  lastGrade      Int?     // FSRS grade 1..4
+
+  @@id([userId, itemId])
+  @@index([userId, due])
+}
+
+model Attempt {
+  id        String   @id @default(uuid()) // client-generated, idempotentní offline sync
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  sessionId String?
+  session   Session? @relation(fields: [sessionId], references: [id])
+  response  Json
+  isCorrect Boolean
+  score     Float
+  timeMs    Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([itemId])
+}
+
+enum SessionKind {
+  DAILY_MIX
+  LESSON
+  MOCK
+  PLACEMENT
+}
+
+// Doménová "session" (běh lekce/mocku), ne Auth.js session. Auth.js v5 s JWT strategy
+// vlastní Session tabulku nepotřebuje, viz komentář v hlavičce souboru.
+model Session {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      SessionKind
+  startedAt DateTime    @default(now())
+  endedAt   DateTime?
+  xpEarned  Int         @default(0)
+  attempts  Attempt[]
+
+  @@index([userId, startedAt])
+}
+
+enum ExamPaper {
+  READING_USE_OF_ENGLISH
+  WRITING
+  LISTENING
+  SPEAKING
+  FULL
+}
+
+model MockExam {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper         ExamPaper
+  startedAt     DateTime  @default(now())
+  submittedAt   DateTime?
+  rawScore      Float?
+  scaledScore   Float?
+  sectionScores Json?
+
+  @@index([userId, startedAt])
+}
+
+model WritingSubmission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String
+  task      Item     @relation(fields: [taskId], references: [id])
+  text      String
+  wordCount Int
+  scores    Json
+  feedback  Json
+  model     String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model SpeakingSubmission {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId     String
+  task       Item     @relation(fields: [taskId], references: [id])
+  audioUrl   String
+  transcript String?
+  scores     Json?
+  feedback   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Gamifikace
+// ---------------------------------------------------------------------------
+
+model Streak {
+  userId           String    @id
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  current          Int       @default(0)
+  longest          Int       @default(0)
+  lastActiveDate   DateTime?
+  freezesAvailable Int       @default(2)
+}
+
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model League {
+  id          String             @id @default(cuid())
+  weekStart   DateTime
+  division    Int
+  memberships LeagueMembership[]
+
+  @@unique([weekStart, division])
+}
+
+model LeagueMembership {
+  userId   String
+  leagueId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  league   League @relation(fields: [leagueId], references: [id])
+  xp       Int    @default(0)
+
+  @@id([userId, leagueId])
+  @@index([leagueId, xp])
+}
+
+model MistakeEntry {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item      @relation(fields: [itemId], references: [id])
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([userId, resolvedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Monetizace a audit
+// ---------------------------------------------------------------------------
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+model Subscription {
+  userId             String             @id
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status              SubscriptionStatus
+  plan                Plan
+  provider            String // "stripe"
+  providerCustomerId  String?
+  currentPeriodEnd    DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  diff      Json
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
