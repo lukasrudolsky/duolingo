@@ -40,7 +40,7 @@ export function SentenceBuildRenderer({
             type="button"
             disabled={disabled}
             onClick={() => removeAt(position)}
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            className="anim-pop-in rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60"
           >
             {payload.blocks[blockIndex]}
           </button>
@@ -53,7 +53,7 @@ export function SentenceBuildRenderer({
             type="button"
             disabled={disabled}
             onClick={() => addBlock(index)}
-            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm disabled:opacity-60"
           >
             {payload.blocks[index]}
           </button>
@@ -63,7 +63,7 @@ export function SentenceBuildRenderer({
         type="button"
         disabled={disabled || order.length !== payload.blocks.length}
         onClick={() => onSubmit({ order })}
-        className="self-start rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-50"
+        className="self-start rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
       >
         Check
       </button>

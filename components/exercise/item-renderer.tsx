@@ -20,6 +20,8 @@ export function ItemRenderer({
   payload,
   disabled,
   onSubmit,
+  response,
+  solution,
 }: {
   type: ItemType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,10 +29,23 @@ export function ItemRenderer({
   disabled: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (response: any) => void;
+  /** The response just submitted, once graded (see LessonRunner). Used to highlight the
+   * picked option for choice-based types; ignored by the rest. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  response?: any;
+  /** The graded item's solution, echoed back by submitAttemptAction only after answering
+   * (SPEC.md section 9's "before" the user answers is what's protected, not "ever"). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  solution?: any;
 }) {
+  const choiceReveal =
+    response && solution
+      ? { selectedIndex: response.selectedIndex, correctIndex: solution.correctIndex ?? solution.oddIndex }
+      : null;
+
   switch (type) {
     case "MCQ_CLOZE":
-      return <McqClozeRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} />;
+      return <McqClozeRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} reveal={choiceReveal} />;
     case "OPEN_CLOZE":
       return <OpenClozeRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} />;
     case "WORD_FORMATION":
@@ -44,7 +59,7 @@ export function ItemRenderer({
     case "COLLOCATION_MATCH":
       return <CollocationMatchRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} />;
     case "ODD_ONE_OUT":
-      return <OddOneOutRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} />;
+      return <OddOneOutRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} reveal={choiceReveal} />;
     case "SENTENCE_BUILD":
       return <SentenceBuildRenderer payload={payload} disabled={disabled} onSubmit={onSubmit} />;
     default:

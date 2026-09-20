@@ -32,12 +32,12 @@ export function TextAnswerInput({
         disabled={disabled}
         onChange={(event) => setValue(event.target.value)}
         placeholder={placeholder}
-        className="flex-1 rounded-md border border-border bg-background px-3 py-2 disabled:opacity-60"
+        className="flex-1 rounded-md border border-border bg-background px-3 py-2 transition-colors focus:border-primary focus:outline-none disabled:opacity-60"
       />
       <button
         type="submit"
         disabled={disabled || value.trim().length === 0}
-        className="rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-50"
+        className="rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
       >
         Check
       </button>

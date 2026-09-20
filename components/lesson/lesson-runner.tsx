@@ -9,6 +9,7 @@ import type { ValidationResult } from "@/core/exercise-engine";
 
 interface Feedback {
   result: ValidationResult;
+  solution: unknown;
   solutionSummary: string;
   explanation: string;
 }
@@ -16,6 +17,7 @@ interface Feedback {
 export function LessonRunner({ sessionId, items }: { sessionId: string; items: LessonItemView[] }) {
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [lastResponse, setLastResponse] = useState<unknown>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [summary, setSummary] = useState<{ correctCount: number; totalItems: number } | null>(null);
   // Date.now() is impure, so it can't run during render (React's purity rule): capture the
@@ -26,10 +28,12 @@ export function LessonRunner({ sessionId, items }: { sessionId: string; items: L
   }, [index]);
 
   const currentItem = items[index];
+  const progressPercent = ((index + (feedback ? 1 : 0)) / items.length) * 100;
 
   async function handleSubmit(response: unknown) {
     if (isSubmitting || feedback) return;
     setIsSubmitting(true);
+    setLastResponse(response);
     const timeMs = Date.now() - startedAtRef.current;
     const outcome = await submitAttemptAction({
       attemptId: crypto.randomUUID(),
@@ -44,6 +48,7 @@ export function LessonRunner({ sessionId, items }: { sessionId: string; items: L
 
   async function handleContinue() {
     setFeedback(null);
+    setLastResponse(null);
     if (index + 1 < items.length) {
       setIndex(index + 1);
       return;
@@ -60,23 +65,28 @@ export function LessonRunner({ sessionId, items }: { sessionId: string; items: L
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-12">
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary transition-[width] duration-200"
-          style={{ width: `${(index / items.length) * 100}%` }}
+          className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
+          style={{ width: `${progressPercent}%` }}
         />
       </div>
       <p className="text-sm text-muted-foreground">
         {index + 1} / {items.length}
       </p>
 
-      <ItemRenderer
-        type={currentItem.type}
-        payload={currentItem.payload}
-        disabled={isSubmitting || feedback !== null}
-        onSubmit={handleSubmit}
-      />
+      <div key={currentItem.id}>
+        <ItemRenderer
+          type={currentItem.type}
+          payload={currentItem.payload}
+          disabled={isSubmitting || feedback !== null}
+          onSubmit={handleSubmit}
+          response={lastResponse}
+          solution={feedback?.solution}
+        />
+      </div>
 
       {feedback ? (
         <FeedbackPanel
+          key={`feedback-${currentItem.id}`}
           result={feedback.result}
           solutionSummary={feedback.solutionSummary}
           explanation={feedback.explanation}

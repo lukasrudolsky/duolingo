@@ -31,11 +31,11 @@ export default async function SignInPage() {
           type="email"
           required
           placeholder={t("emailPlaceholder")}
-          className="rounded-md border border-border bg-background px-3 py-2"
+          className="rounded-md border border-border bg-background px-3 py-2 transition-colors focus:border-primary focus:outline-none"
         />
         <button
           type="submit"
-          className="rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground"
+          className="rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
         >
           {t("submit")}
         </button>
@@ -52,7 +52,7 @@ export default async function SignInPage() {
           >
             <button
               type="submit"
-              className="w-full rounded-full border border-border px-4 py-2 font-semibold"
+              className="w-full rounded-full border border-border px-4 py-2 font-semibold transition-colors hover:border-primary"
             >
               {t("googleButton")}
             </button>

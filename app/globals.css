@@ -8,6 +8,28 @@
   --border: #dfe3e8;
   --primary: #2b59ff;
   --primary-foreground: #ffffff;
+
+  --success: #1a9f5b;
+  --success-foreground: #ffffff;
+  --success-soft: #eafbf2;
+  --success-border: #34c98a;
+
+  --danger: #e0433a;
+  --danger-foreground: #ffffff;
+  --danger-soft: #fdeeec;
+  --danger-border: #f0857c;
+
+  --warning: #b9790a;
+  --warning-foreground: #ffffff;
+  --warning-soft: #fdf6e3;
+  --warning-border: #e0ad3d;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.06);
+  --shadow-md: 0 6px 16px rgba(20, 24, 31, 0.08);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -20,6 +42,18 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 }
@@ -33,6 +67,24 @@
     --border: #262b33;
     --primary: #6d8bff;
     --primary-foreground: #0d0f13;
+
+    --success: #34c98a;
+    --success-foreground: #06150e;
+    --success-soft: #0e2a20;
+    --success-border: #2f9c6c;
+
+    --danger: #ff6b5e;
+    --danger-foreground: #1a0605;
+    --danger-soft: #2a1512;
+    --danger-border: #c14a3e;
+
+    --warning: #e0ad3d;
+    --warning-foreground: #1a1100;
+    --warning-soft: #2a2210;
+    --warning-border: #b08228;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -43,4 +95,30 @@ body {
   /* Font weight 500+ for UI text (SPEC.md section 8): thin weights blur on some monitors.
      -webkit-font-smoothing: antialiased is deliberately not set for the same reason. */
   font-weight: 500;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pop-in {
+    0% { transform: scale(0.94); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes slide-up-fade {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  @keyframes shake-x {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+  @keyframes check-draw {
+    from { stroke-dashoffset: 24; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  .anim-pop-in { animation: pop-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .anim-slide-up-fade { animation: slide-up-fade 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .anim-shake { animation: shake-x 320ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+  .anim-check-draw { animation: check-draw 320ms 80ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 }

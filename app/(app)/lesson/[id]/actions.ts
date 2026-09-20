@@ -81,6 +81,9 @@ export async function submitAttemptAction(input: {
 
   return {
     result,
+    // Safe only because the user has already answered (SPEC.md section 9's "before" the
+    // key word): the choice renderers use this to highlight the correct option.
+    solution,
     solutionSummary: exercise.describeSolution({ payload, solution, response, result }),
     explanation: item.explanation,
   };

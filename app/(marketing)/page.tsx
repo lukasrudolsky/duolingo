@@ -10,7 +10,7 @@ export default async function MarketingPage() {
       <p className="max-w-xl text-lg text-muted-foreground">{t("subtitle")}</p>
       <Link
         href="/sign-in"
-        className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground"
+        className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
       >
         {t("cta")}
       </Link>
